@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Merry Christmas Animation 2025</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0a192f; /* สีกรมท่าลึกแบบในรูป */
+        }
+        canvas {
+            display: block;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            width: 100%;
+        }
+        .name {
+            font-family: 'Arial', sans-serif;
+            font-size: 3.5rem;
+            color: #fdf5e6;
+            text-shadow: 0 0 15px rgba(255,255,255,0.5);
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .greeting {
+            font-family: 'Serif', Georgia;
+            font-size: 2rem;
+            color: #d4af37; /* สีทอง */
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="xmasCanvas"></canvas>
+    
+    <div id="ui-layer">
+        <div class="name">Stephanie</div>
+        <div class="greeting">Merry Christmas</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('xmasCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, dpr;
+
+        // รายการตัวละคร (Emoji based for high compatibility & sharpness)
+        const emojis = {
+            santa: "🎅",
+            reindeer: "🦌",
+            cat: "🐱",
+            penguin: "🐧",
+            sheep: "🐑",
+            chip: "🐹",
+            capybara: "🦫",
+            fanta: "🦊" // ตีความ "แฟนต้า" เป็นจิ้งจอกส้มสุดน่ารัก
+        };
+
+        let snowflakes = [];
+        let stars = [];
+        let characters = [];
+
+        function init() {
+            // จัดการความคมชัดสำหรับจอ High DPI
+            dpr = window.devicePixelRatio || 1;
+            width = window.innerWidth;
+            height = window.innerHeight;
+            
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            ctx.scale(dpr, dpr);
+
+            // สร้างหิมะ
+            snowflakes = Array.from({ length: 150 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                radius: Math.random() * 3 + 1,
+                speed: Math.random() * 1 + 0.5,
+                opacity: Math.random()
+            }));
+
+            // สร้างดาวกระพริบ
+            stars = Array.from({ length: 40 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * (height * 0.6),
+                size: Math.random() * 20 + 10,
+                blink: Math.random() * 0.05
+            }));
+
+            // สร้างตัวละครที่พื้น (Static Group)
+            const groundList = [emojis.cat, emojis.penguin, emojis.sheep, emojis.chip, emojis.capybara, emojis.fanta];
+            characters = groundList.map((emoji, i) => ({
+                emoji: emoji,
+                x: (width / (groundList.length + 1)) * (i + 1),
+                y: height - 60,
+                bounce: Math.random() * Math.PI,
+                size: 50
+            }));
+        }
+
+        function drawStar(x, y, size) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.fillStyle = "#fff700";
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "white";
+            ctx.beginPath();
+            for (let i = 0; i < 4; i++) {
+                ctx.rotate(Math.PI / 2);
+                ctx.lineTo(0, size);
+            }
+            ctx.fill();
+            ctx.restore();
+        }
+
+        let santaX = -200;
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. วาดพื้นหิมะ
+            const grad = ctx.createLinearGradient(0, height-100, 0, height);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(1, '#e0e0e0');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.ellipse(width/2, height + 50, width * 0.8, 200, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 2. วาดดาว (Stars)
+            stars.forEach(s => {
+                s.size += Math.sin(Date.now() * 0.005) * 0.1;
+                drawStar(s.x, s.y, Math.abs(s.size % 10));
+            });
+
+            // 3. วาดหิมะ (Snow)
+            ctx.fillStyle = "white";
+            snowflakes.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                p.y += p.speed;
+                p.x += Math.sin(p.y / 30) * 0.5;
+                if (p.y > height) p.y = -10;
+            });
+
+            // 4. วาดซานต้าและกวางเรนเดียร์ (บินผ่านท้องฟ้า)
+            santaX += 1.5;
+            if (santaX > width + 300) santaX = -300;
+            const santaY = 100 + Math.sin(santaX / 50) * 20;
+            ctx.font = "60px Arial";
+            ctx.fillText(emojis.reindeer, santaX, santaY);
+            ctx.fillText(emojis.reindeer, santaX + 60, santaY);
+            ctx.fillText("🛷" + emojis.santa, santaX - 80, santaY);
+
+            // 5. วาดแก๊งสัตว์ด้านล่าง (Animated)
+            characters.forEach(c => {
+                c.bounce += 0.05;
+                const currentY = c.y + Math.sin(c.bounce) * 10;
+                ctx.font = `${c.size}px Arial`;
+                ctx.textAlign = "center";
+                ctx.fillText(c.emoji, c.x, currentY);
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', init);
+        init();
+        animate();
+    </script>
+</body>
+</html>
