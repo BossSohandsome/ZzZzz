@@ -3,43 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Merry Christmas Animation 2025</title>
+    <title>Interactive Xmas Animation</title>
     <style>
+        :root {
+            --gold: #d4af37;
+            --snow-white: #fdf5e6;
+        }
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #0a192f; /* สีกรมท่าลึกแบบในรูป */
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #0a192f;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        canvas {
-            display: block;
-        }
+        canvas { display: block; }
+
+        /* UI Text Layer */
         #ui-layer {
-            position: absolute;
-            top: 50%;
-            left: 50%;
+            position: absolute; top: 40%; left: 50%;
             transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
-            width: 100%;
+            text-align: center; pointer-events: none; width: 100%;
         }
         .name {
-            font-family: 'Arial', sans-serif;
-            font-size: 3.5rem;
-            color: #fdf5e6;
-            text-shadow: 0 0 15px rgba(255,255,255,0.5);
-            margin-bottom: 5px;
-            font-weight: bold;
+            font-size: clamp(3rem, 10vw, 5rem);
+            color: var(--snow-white);
+            text-shadow: 0 0 20px rgba(255,255,255,0.6);
+            font-weight: bold; margin: 0;
         }
         .greeting {
-            font-family: 'Serif', Georgia;
-            font-size: 2rem;
-            color: #d4af37; /* สีทอง */
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            color: var(--gold);
+            text-transform: uppercase; letter-spacing: 5px; margin-top: 10px;
+        }
+
+        /* Button Container */
+        .controls {
+            position: absolute; bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 10px; flex-wrap: wrap;
+            justify-content: center; width: 90%;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white; padding: 10px 15px;
+            border-radius: 20px; cursor: pointer;
+            backdrop-filter: blur(5px);
+            font-size: 14px; transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button:active { transform: scale(0.9); background: var(--gold); }
+        button.active { background: var(--gold); border-color: white; }
+
+        /* Surprise Button */
+        .btn-special {
+            background: #e74c3c; font-weight: bold; border: none;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
         }
     </style>
 </head>
@@ -52,21 +69,26 @@
         <div class="greeting">Merry Christmas</div>
     </div>
 
+    <div class="controls">
+        <button id="toggleSnow" class="active">❄️ หิมะ</button>
+        <button id="toggleStars" class="active">✨ ดาว</button>
+        <button id="jumpAnimals">🐾 กระโดด!</button>
+        <button id="btnSurprise" class="btn-special">🎁 เซอร์ไพรส์!</button>
+    </div>
+
     <script>
         const canvas = document.getElementById('xmasCanvas');
         const ctx = canvas.getContext('2d');
         let width, height, dpr;
+        
+        // State
+        let showSnow = true;
+        let showStars = true;
+        let surpriseParticles = [];
 
-        // รายการตัวละคร (Emoji based for high compatibility & sharpness)
         const emojis = {
-            santa: "🎅",
-            reindeer: "🦌",
-            cat: "🐱",
-            penguin: "🐧",
-            sheep: "🐑",
-            chip: "🐹",
-            capybara: "🦫",
-            fanta: "🦊" // ตีความ "แฟนต้า" เป็นจิ้งจอกส้มสุดน่ารัก
+            santa: "🎅", reindeer: "🦌", cat: "🐱", penguin: "🐧", 
+            sheep: "🐑", chip: "🐹", capy: "🦫", fanta: "🦊"
         };
 
         let snowflakes = [];
@@ -74,57 +96,39 @@
         let characters = [];
 
         function init() {
-            // จัดการความคมชัดสำหรับจอ High DPI
             dpr = window.devicePixelRatio || 1;
             width = window.innerWidth;
             height = window.innerHeight;
-            
             canvas.width = width * dpr;
             canvas.height = height * dpr;
-            canvas.style.width = width + 'px';
-            canvas.style.height = height + 'px';
             ctx.scale(dpr, dpr);
 
-            // สร้างหิมะ
-            snowflakes = Array.from({ length: 150 }, () => ({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                radius: Math.random() * 3 + 1,
-                speed: Math.random() * 1 + 0.5,
-                opacity: Math.random()
+            snowflakes = Array.from({ length: 120 }, () => ({
+                x: Math.random() * width, y: Math.random() * height,
+                r: Math.random() * 3 + 1, s: Math.random() * 1 + 0.5
             }));
 
-            // สร้างดาวกระพริบ
-            stars = Array.from({ length: 40 }, () => ({
-                x: Math.random() * width,
-                y: Math.random() * (height * 0.6),
-                size: Math.random() * 20 + 10,
-                blink: Math.random() * 0.05
+            stars = Array.from({ length: 30 }, () => ({
+                x: Math.random() * width, y: Math.random() * (height * 0.5),
+                size: Math.random() * 15 + 10
             }));
 
-            // สร้างตัวละครที่พื้น (Static Group)
-            const groundList = [emojis.cat, emojis.penguin, emojis.sheep, emojis.chip, emojis.capybara, emojis.fanta];
+            const groundList = [emojis.cat, emojis.fanta, emojis.penguin, emojis.sheep, emojis.chip, emojis.capy];
             characters = groundList.map((emoji, i) => ({
-                emoji: emoji,
-                x: (width / (groundList.length + 1)) * (i + 1),
-                y: height - 60,
-                bounce: Math.random() * Math.PI,
-                size: 50
+                emoji, x: (width / (groundList.length + 1)) * (i + 1),
+                y: height - 80, bounce: 0, vY: 0, isJumping: false
             }));
         }
 
         function drawStar(x, y, size) {
             ctx.save();
             ctx.translate(x, y);
-            ctx.fillStyle = "#fff700";
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = "white";
-            ctx.beginPath();
+            ctx.fillStyle = "#FFF700";
+            ctx.shadowBlur = 15; ctx.shadowColor = "white";
             for (let i = 0; i < 4; i++) {
                 ctx.rotate(Math.PI / 2);
-                ctx.lineTo(0, size);
+                ctx.fillRect(-1, -size/2, 2, size);
             }
-            ctx.fill();
             ctx.restore();
         }
 
@@ -132,56 +136,90 @@
         function animate() {
             ctx.clearRect(0, 0, width, height);
 
-            // 1. วาดพื้นหิมะ
-            const grad = ctx.createLinearGradient(0, height-100, 0, height);
-            grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(1, '#e0e0e0');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.ellipse(width/2, height + 50, width * 0.8, 200, 0, 0, Math.PI * 2);
-            ctx.fill();
+            // 1. วาดดาว
+            if (showStars) {
+                stars.forEach(s => drawStar(s.x, s.y, s.size + Math.sin(Date.now()*0.005)*5));
+            }
 
-            // 2. วาดดาว (Stars)
-            stars.forEach(s => {
-                s.size += Math.sin(Date.now() * 0.005) * 0.1;
-                drawStar(s.x, s.y, Math.abs(s.size % 10));
-            });
-
-            // 3. วาดหิมะ (Snow)
-            ctx.fillStyle = "white";
-            snowflakes.forEach(p => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-                p.y += p.speed;
-                p.x += Math.sin(p.y / 30) * 0.5;
-                if (p.y > height) p.y = -10;
-            });
-
-            // 4. วาดซานต้าและกวางเรนเดียร์ (บินผ่านท้องฟ้า)
+            // 2. วาดซานต้า
             santaX += 1.5;
             if (santaX > width + 300) santaX = -300;
-            const santaY = 100 + Math.sin(santaX / 50) * 20;
-            ctx.font = "60px Arial";
-            ctx.fillText(emojis.reindeer, santaX, santaY);
-            ctx.fillText(emojis.reindeer, santaX + 60, santaY);
-            ctx.fillText("🛷" + emojis.santa, santaX - 80, santaY);
+            const santaY = 80 + Math.sin(santaX/50)*20;
+            ctx.font = "50px Arial";
+            ctx.fillText(emojis.reindeer + emojis.reindeer + "🛷" + emojis.santa, santaX, santaY);
 
-            // 5. วาดแก๊งสัตว์ด้านล่าง (Animated)
+            // 3. วาดพื้นหิมะ
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(width/2, height + 400, 500, 0, Math.PI*2);
+            ctx.fill();
+
+            // 4. วาดตัวละคร
             characters.forEach(c => {
-                c.bounce += 0.05;
-                const currentY = c.y + Math.sin(c.bounce) * 10;
-                ctx.font = `${c.size}px Arial`;
+                if (c.isJumping) {
+                    c.vY += 0.8; // Gravity
+                    c.y += c.vY;
+                    if (c.y >= height - 80) {
+                        c.y = height - 80;
+                        c.isJumping = false;
+                    }
+                }
+                ctx.font = "50px Arial";
                 ctx.textAlign = "center";
-                ctx.fillText(c.emoji, c.x, currentY);
+                ctx.fillText(c.emoji, c.x, c.y);
+            });
+
+            // 5. หิมะ
+            if (showSnow) {
+                ctx.fillStyle = "white";
+                snowflakes.forEach(p => {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+                    p.y += p.s; if (p.y > height) p.y = -10;
+                });
+            }
+
+            // 6. Surprise Particles
+            surpriseParticles.forEach((p, i) => {
+                ctx.font = "30px Arial";
+                ctx.fillText(p.char, p.x, p.y);
+                p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life--;
+                if (p.life <= 0) surpriseParticles.splice(i, 1);
             });
 
             requestAnimationFrame(animate);
         }
 
+        // Event Listeners
+        document.getElementById('toggleSnow').onclick = (e) => {
+            showSnow = !showSnow;
+            e.target.classList.toggle('active');
+        };
+        document.getElementById('toggleStars').onclick = (e) => {
+            showStars = !showStars;
+            e.target.classList.toggle('active');
+        };
+        document.getElementById('jumpAnimals').onclick = () => {
+            characters.forEach(c => {
+                if (!c.isJumping) {
+                    c.vY = -15;
+                    c.isJumping = true;
+                }
+            });
+        };
+        document.getElementById('btnSurprise').onclick = () => {
+            for(let i=0; i<15; i++) {
+                surpriseParticles.push({
+                    x: width/2, y: height/2,
+                    vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*15,
+                    char: ["🎁","❤️","✨","🍭"][Math.floor(Math.random()*4)],
+                    life: 100
+                });
+            }
+        };
+
         window.addEventListener('resize', init);
-        init();
-        animate();
+        init(); animate();
     </script>
 </body>
 </html>
+
